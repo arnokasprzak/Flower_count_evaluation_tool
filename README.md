@@ -40,3 +40,7 @@ To launch the application, type the following in the terminal (Ensure that the E
 streamlit run Evaluation_tool.py
 ```
 The application will now start and is ready to use.
+
+## 4. Launch via URL
+
+The app is also available via https://flowercountevaluationtool.streamlit.app/
