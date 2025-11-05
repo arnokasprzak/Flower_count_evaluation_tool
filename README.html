@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>README</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background-color: #f8f8f8;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 5px;
+        }
+        code {
+            font-family: "Courier New", Courier, monospace;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<h1>Flower count rating tool</h1>
+<p>This document contains all the information needed to use the Flower Count Rating Tool.</p>
+<h2>1. Python installation</h2>
+<p>Before using the web application, make sure to set up a Python environment with the required modules.</p>
+<p>Check if python is installed: Open your terminal (You can find the terminal as “Command Prompt or Terminal" on Windows) and run (paste and press enter):</p>
+<pre><code class="language-bash">python --version
+</code></pre>
+<h2>2. Python environment setup</h2>
+<p>if python is installed you will see the version number. If python is not installed, install it from https://www.python.org/downloads/</p>
+<p>After installing Python, navigate to your project folder by running:</p>
+<pre><code class="language-bash">cd path/to/your/project
+</code></pre>
+<p>Create a virtual environment (commonly named venv):</p>
+<pre><code class="language-bash">python -m venv venv
+</code></pre>
+<p>Install required modules (Ensure that the requirements.txt file is located in the same directory as your project):</p>
+<pre><code class="language-bash">pip install -r requirements.txt
+</code></pre>
+<p>Activate the virtual environment:</p>
+<pre><code class="language-bash">venv\Scripts\activate
+</code></pre>
+<h2>3. Launch the webapplication</h2>
+<p>To launch the application, type the following in the terminal (Ensure that the Evaluation_tool.py file is located in the same directory as your project):</p>
+<pre><code class="language-bash">streamlit run Evaluation_tool.py
+</code></pre>
+<p>The application will now start and is ready to use.</p>
+</body>
+</html>
