@@ -1,5 +1,4 @@
 import streamlit as st
-import os
 import random
 import pandas as pd
 from io import StringIO
@@ -16,38 +15,40 @@ if "selected_tiles" not in st.session_state:
 
 # === INTRO SCREEN ===
 if st.session_state.phase == "intro":
-    st.title("Flower count tile evaluation")
+    st.title("Flower Count Tile Evaluation")
     st.markdown("""
     Welcome!  
+    Please upload all JPG images from your folder.  
     You will first see a number of **random example tiles**.  
     After that, you’ll be asked to **rate a number of tiles** from **0 to 5** based on how many flowers you see.
     """)
 
-    tile_dir_input = st.text_input("Enter the path to the tile folder:", value=r"C:\Users\akasprzak\OneDrive - ILVO\BELIS\Interactive_validation_tool\Subplot_tiles")
+    uploaded_files = st.file_uploader(
+        "Upload all tile images (select all JPGs from your folder)",
+        type=["jpg"],
+        accept_multiple_files=True
+    )
+
     exploration_count_input = st.number_input("Number of example tiles to explore:", min_value=1, max_value=50, value=5)
     rating_count_input = st.number_input("Number of tiles to rate:", min_value=1, max_value=100, value=20)
 
     if st.button("Start Exploration Phase"):
-        try:
-            all_tiles = [f for f in os.listdir(tile_dir_input) if f.endswith(".jpg")]
-            random.shuffle(all_tiles)
-
-            st.session_state.TILE_DIR = tile_dir_input
+        if uploaded_files and len(uploaded_files) >= exploration_count_input + rating_count_input:
+            random.shuffle(uploaded_files)
+            st.session_state.selected_tiles = uploaded_files
             st.session_state.EXPLORATION_COUNT = exploration_count_input
             st.session_state.RATING_COUNT = rating_count_input
-            st.session_state.selected_tiles = all_tiles
-
             st.session_state.phase = "explore"
             st.session_state.explore_index = 0
             st.rerun()
-        except Exception as e:
-            st.error(f"Error loading tiles: {e}")
+        else:
+            st.error("Please upload enough images for exploration and rating.")
 
 # === PHASE 1: EXPLORATION ===
 elif st.session_state.phase == "explore":
     st.header("Exploration Phase")
     idx = st.session_state.explore_index
-    st.image(os.path.join(st.session_state.TILE_DIR, st.session_state.selected_tiles[idx]), use_container_width=True)
+    st.image(st.session_state.selected_tiles[idx], use_container_width=True)
     st.caption(f"Example tile {idx + 1} of {st.session_state.EXPLORATION_COUNT}")
 
     if st.button("Next"):
@@ -63,11 +64,11 @@ elif st.session_state.phase == "rate":
     st.header(f"Rating {idx + 1} of {st.session_state.RATING_COUNT}")
     current_file = st.session_state.selected_tiles[st.session_state.EXPLORATION_COUNT + idx]
 
-    st.image(os.path.join(st.session_state.TILE_DIR, current_file), use_container_width=True)
+    st.image(current_file, use_container_width=True)
     score = st.slider("How many flowers do you see?", 0, 5, 0)
 
     if st.button("Save rating and next"):
-        st.session_state.ratings.append({"filename": current_file, "score": score})
+        st.session_state.ratings.append({"filename": current_file.name, "score": score})
         st.session_state.rating_index += 1
 
         if st.session_state.rating_index >= st.session_state.RATING_COUNT:
