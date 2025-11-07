@@ -12,6 +12,10 @@ if "rating_index" not in st.session_state:
     st.session_state.rating_index = 0
 if "selected_tiles" not in st.session_state:
     st.session_state.selected_tiles = []
+if "EXPLORATION_COUNT" not in st.session_state:
+    st.session_state.EXPLORATION_COUNT = 0
+if "RATING_COUNT" not in st.session_state:
+    st.session_state.RATING_COUNT = 0
 
 # === INTRO SCREEN ===
 if st.session_state.phase == "intro":
@@ -29,11 +33,20 @@ if st.session_state.phase == "intro":
         accept_multiple_files=True
     )
 
-    exploration_count_input = st.number_input("Number of example tiles to explore:", min_value=1, max_value=50, value=5)
-    rating_count_input = st.number_input("Number of tiles to rate:", min_value=1, max_value=100, value=20)
+    exploration_count_input = st.number_input(
+        "Number of example tiles to explore:",
+        min_value=1, max_value=50, value=5
+    )
+
+    # Geen limiet van 100 meer
+    rating_count_input = st.number_input(
+        "Number of tiles to rate:",
+        min_value=1, value=200
+    )
 
     if st.button("Start Exploration Phase"):
         if uploaded_files and len(uploaded_files) >= exploration_count_input + rating_count_input:
+            uploaded_files = list(uploaded_files)
             random.shuffle(uploaded_files)
             st.session_state.selected_tiles = uploaded_files
             st.session_state.EXPLORATION_COUNT = exploration_count_input
@@ -56,24 +69,62 @@ elif st.session_state.phase == "explore":
         if st.session_state.explore_index >= st.session_state.EXPLORATION_COUNT:
             st.session_state.phase = "rate"
             st.session_state.rating_index = 0
+            st.session_state.ratings = [
+                {"filename": f.name, "score": None}
+                for f in st.session_state.selected_tiles[
+                    st.session_state.EXPLORATION_COUNT:
+                    st.session_state.EXPLORATION_COUNT + st.session_state.RATING_COUNT
+                ]
+            ]
         st.rerun()
 
 # === PHASE 2: RATING ===
 elif st.session_state.phase == "rate":
     idx = st.session_state.rating_index
-    st.header(f"Rating {idx + 1} of {st.session_state.RATING_COUNT}")
+    total = st.session_state.RATING_COUNT
     current_file = st.session_state.selected_tiles[st.session_state.EXPLORATION_COUNT + idx]
 
+    st.header(f"Rating {idx + 1} of {total}")
+    st.caption(f"Filename: {current_file.name}")
+
+    # Grotere foto met zoom-link
     st.image(current_file, use_container_width=True)
-    score = st.slider("How many flowers do you see?", 0, 5, 0)
+    with st.expander("Click to open this image larger (right-click → Open image in new tab)"):
+        st.image(current_file, use_container_width=True)
 
-    if st.button("Save rating and next"):
-        st.session_state.ratings.append({"filename": current_file.name, "score": score})
-        st.session_state.rating_index += 1
+    # Huidige score tonen (indien al ingevuld)
+    current_score = st.session_state.ratings[idx]["score"]
+    score = st.number_input(
+        "How many flowers do you see? (0–5)",
+        min_value=0, max_value=5,
+        value=current_score if current_score is not None else 0,
+        key=f"score_input_{idx}"
+    )
 
-        if st.session_state.rating_index >= st.session_state.RATING_COUNT:
-            st.session_state.phase = "done"
-        st.rerun()
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("Previous", disabled=(idx == 0)):
+            st.session_state.ratings[idx]["score"] = score
+            st.session_state.rating_index -= 1
+            st.rerun()
+
+    with col2:
+        if st.button("Save and Next"):
+            st.session_state.ratings[idx]["score"] = score
+            if idx + 1 < total:
+                st.session_state.rating_index += 1
+            else:
+                st.session_state.phase = "done"
+            st.rerun()
+
+    with col3:
+        if st.button("Skip / Next"):
+            # Laat score ongewijzigd en ga verder
+            if idx + 1 < total:
+                st.session_state.rating_index += 1
+            else:
+                st.session_state.phase = "done"
+            st.rerun()
 
 # === FINAL PHASE: DOWNLOAD CSV ===
 elif st.session_state.phase == "done":
