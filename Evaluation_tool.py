@@ -17,17 +17,14 @@ if "EXPLORATION_COUNT" not in st.session_state:
 if "RATING_COUNT" not in st.session_state:
     st.session_state.RATING_COUNT = 0
 
-st.set_page_config(layout="wide")  # Zorgt dat alles breder getoond wordt
+st.set_page_config(layout="centered")
 
-# === INTRO SCREEN ===
+# === INTRO PHASE ===
 if st.session_state.phase == "intro":
     st.title("Flower Count Tile Evaluation")
-    st.markdown("""
-    Welcome!  
-    Please upload all JPG images from your folder.  
-    You will first see a number of **random example tiles**.  
-    After that, you’ll be asked to **rate a number of tiles** from **0 to 5** based on how many flowers you see.
-    """)
+    st.markdown(
+        "Upload JPG images, view a few examples, and then rate each tile from 0–5 based on how many flowers you see."
+    )
 
     uploaded_files = st.file_uploader(
         "Upload all tile images (select all JPGs from your folder)",
@@ -56,14 +53,14 @@ if st.session_state.phase == "intro":
             st.session_state.explore_index = 0
             st.rerun()
         else:
-            st.error("Please upload enough images for exploration and rating.")
+            st.error("Please upload enough images for both exploration and rating.")
 
-# === PHASE 1: EXPLORATION ===
+# === EXPLORATION PHASE ===
 elif st.session_state.phase == "explore":
     st.header("Exploration Phase")
-
     idx = st.session_state.explore_index
-    st.image(st.session_state.selected_tiles[idx], use_container_width=True)
+    # Smaller image to avoid scrolling
+    st.image(st.session_state.selected_tiles[idx], width=400)
     st.caption(f"Example tile {idx + 1} of {st.session_state.EXPLORATION_COUNT}")
 
     if st.button("Next"):
@@ -80,54 +77,51 @@ elif st.session_state.phase == "explore":
             ]
         st.rerun()
 
-# === PHASE 2: RATING ===
+# === RATING PHASE ===
 elif st.session_state.phase == "rate":
     idx = st.session_state.rating_index
     total = st.session_state.RATING_COUNT
-    current_file = st.session_state.selected_tiles[st.session_state.EXPLORATION_COUNT + idx]
+    current_file = st.session_state.selected_tiles[
+        st.session_state.EXPLORATION_COUNT + idx
+    ]
 
     st.header("Rating Phase")
+
+    # Show smaller image (fixed height) to fit on one screen, keep zoom icon
+    st.image(current_file, width=400)  # Adjust width to fit vertically
+
+    # Progress text below image
     st.caption(f"Photo {idx + 1} of {total}")
 
-    # Lay-out in 2 kolommen om alles netjes op 1 scherm te houden
-    col_img, col_controls = st.columns([3, 1], gap="medium")
+    # Numeric input for score
+    current_score = st.session_state.ratings[idx]["score"]
+    score = st.number_input(
+        "How many flowers do you see? (0–5)",
+        min_value=0, max_value=5,
+        value=current_score if current_score is not None else 0,
+        key=f"score_input_{idx}"
+    )
 
-    with col_img:
-        # Grote foto, automatisch zoomicoon beschikbaar
-        st.image(current_file, use_container_width=True)
+    # Navigation buttons
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("Previous", disabled=(idx == 0)):
+            st.session_state.ratings[idx]["score"] = score
+            st.session_state.rating_index -= 1
+            st.rerun()
+    with col2:
+        if st.button("Save and Next"):
+            st.session_state.ratings[idx]["score"] = score
+            if idx + 1 < total:
+                st.session_state.rating_index += 1
+            else:
+                st.session_state.phase = "done"
+            st.rerun()
 
-    with col_controls:
-        current_score = st.session_state.ratings[idx]["score"]
-        score = st.number_input(
-            "Flowers seen (0–5):",
-            min_value=0, max_value=5,
-            value=current_score if current_score is not None else 0,
-            key=f"score_input_{idx}"
-        )
-
-        st.write("")  # Kleine spatie
-        prev_col, next_col = st.columns(2)
-        with prev_col:
-            if st.button("Previous", disabled=(idx == 0)):
-                st.session_state.ratings[idx]["score"] = score
-                st.session_state.rating_index -= 1
-                st.rerun()
-
-        with next_col:
-            if st.button("Save and Next"):
-                st.session_state.ratings[idx]["score"] = score
-                if idx + 1 < total:
-                    st.session_state.rating_index += 1
-                else:
-                    st.session_state.phase = "done"
-                st.rerun()
-
-# === FINAL PHASE: DOWNLOAD CSV ===
+# === COMPLETION PHASE ===
 elif st.session_state.phase == "done":
     st.success("All ratings completed")
-
     df = pd.DataFrame(st.session_state.ratings)
-
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
 
