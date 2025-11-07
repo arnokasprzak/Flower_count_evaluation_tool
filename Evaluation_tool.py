@@ -59,8 +59,9 @@ if st.session_state.phase == "intro":
 elif st.session_state.phase == "explore":
     st.header("Exploration Phase")
     idx = st.session_state.explore_index
-    # Smaller image to avoid scrolling
-    st.image(st.session_state.selected_tiles[idx], width=400)
+
+    # Show image at smaller width to avoid vertical scrolling
+    st.image(st.session_state.selected_tiles[idx], width=500)
     st.caption(f"Example tile {idx + 1} of {st.session_state.EXPLORATION_COUNT}")
 
     if st.button("Next"):
@@ -68,6 +69,7 @@ elif st.session_state.phase == "explore":
         if st.session_state.explore_index >= st.session_state.EXPLORATION_COUNT:
             st.session_state.phase = "rate"
             st.session_state.rating_index = 0
+            # Initialize rating list
             st.session_state.ratings = [
                 {"filename": f.name, "score": None}
                 for f in st.session_state.selected_tiles[
@@ -87,13 +89,13 @@ elif st.session_state.phase == "rate":
 
     st.header("Rating Phase")
 
-    # Show smaller image (fixed height) to fit on one screen, keep zoom icon
-    st.image(current_file, width=400)  # Adjust width to fit vertically
+    # Show smaller image to avoid scrolling; zoom icon remains active
+    st.image(current_file, width=500)
 
-    # Progress text below image
+    # Show progress below the image
     st.caption(f"Photo {idx + 1} of {total}")
 
-    # Numeric input for score
+    # Numeric input (type score manually)
     current_score = st.session_state.ratings[idx]["score"]
     score = st.number_input(
         "How many flowers do you see? (0–5)",
