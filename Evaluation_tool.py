@@ -17,6 +17,8 @@ if "EXPLORATION_COUNT" not in st.session_state:
 if "RATING_COUNT" not in st.session_state:
     st.session_state.RATING_COUNT = 0
 
+st.set_page_config(layout="wide")  # Zorgt dat alles breder getoond wordt
+
 # === INTRO SCREEN ===
 if st.session_state.phase == "intro":
     st.title("Flower Count Tile Evaluation")
@@ -38,7 +40,6 @@ if st.session_state.phase == "intro":
         min_value=1, max_value=50, value=5
     )
 
-    # Geen limiet van 100 meer
     rating_count_input = st.number_input(
         "Number of tiles to rate:",
         min_value=1, value=200
@@ -60,6 +61,7 @@ if st.session_state.phase == "intro":
 # === PHASE 1: EXPLORATION ===
 elif st.session_state.phase == "explore":
     st.header("Exploration Phase")
+
     idx = st.session_state.explore_index
     st.image(st.session_state.selected_tiles[idx], use_container_width=True)
     st.caption(f"Example tile {idx + 1} of {st.session_state.EXPLORATION_COUNT}")
@@ -84,47 +86,41 @@ elif st.session_state.phase == "rate":
     total = st.session_state.RATING_COUNT
     current_file = st.session_state.selected_tiles[st.session_state.EXPLORATION_COUNT + idx]
 
-    st.header(f"Rating {idx + 1} of {total}")
-    st.caption(f"Filename: {current_file.name}")
+    st.header("Rating Phase")
+    st.caption(f"Photo {idx + 1} of {total}")
 
-    # Grotere foto met zoom-link
-    st.image(current_file, use_container_width=True)
-    with st.expander("Click to open this image larger (right-click → Open image in new tab)"):
+    # Lay-out in 2 kolommen om alles netjes op 1 scherm te houden
+    col_img, col_controls = st.columns([3, 1], gap="medium")
+
+    with col_img:
+        # Grote foto, automatisch zoomicoon beschikbaar
         st.image(current_file, use_container_width=True)
 
-    # Huidige score tonen (indien al ingevuld)
-    current_score = st.session_state.ratings[idx]["score"]
-    score = st.number_input(
-        "How many flowers do you see? (0–5)",
-        min_value=0, max_value=5,
-        value=current_score if current_score is not None else 0,
-        key=f"score_input_{idx}"
-    )
+    with col_controls:
+        current_score = st.session_state.ratings[idx]["score"]
+        score = st.number_input(
+            "Flowers seen (0–5):",
+            min_value=0, max_value=5,
+            value=current_score if current_score is not None else 0,
+            key=f"score_input_{idx}"
+        )
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("Previous", disabled=(idx == 0)):
-            st.session_state.ratings[idx]["score"] = score
-            st.session_state.rating_index -= 1
-            st.rerun()
+        st.write("")  # Kleine spatie
+        prev_col, next_col = st.columns(2)
+        with prev_col:
+            if st.button("Previous", disabled=(idx == 0)):
+                st.session_state.ratings[idx]["score"] = score
+                st.session_state.rating_index -= 1
+                st.rerun()
 
-    with col2:
-        if st.button("Save and Next"):
-            st.session_state.ratings[idx]["score"] = score
-            if idx + 1 < total:
-                st.session_state.rating_index += 1
-            else:
-                st.session_state.phase = "done"
-            st.rerun()
-
-    with col3:
-        if st.button("Skip / Next"):
-            # Laat score ongewijzigd en ga verder
-            if idx + 1 < total:
-                st.session_state.rating_index += 1
-            else:
-                st.session_state.phase = "done"
-            st.rerun()
+        with next_col:
+            if st.button("Save and Next"):
+                st.session_state.ratings[idx]["score"] = score
+                if idx + 1 < total:
+                    st.session_state.rating_index += 1
+                else:
+                    st.session_state.phase = "done"
+                st.rerun()
 
 # === FINAL PHASE: DOWNLOAD CSV ===
 elif st.session_state.phase == "done":
@@ -132,7 +128,6 @@ elif st.session_state.phase == "done":
 
     df = pd.DataFrame(st.session_state.ratings)
 
-    # Create downloadable CSV (no preview)
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
 
